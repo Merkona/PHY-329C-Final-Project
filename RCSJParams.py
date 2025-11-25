@@ -105,5 +105,3 @@ class RCSJ:
                 raise AttributeError(f"Unknown parameter: {name}")
             setattr(self.params, name, value)
         self.params.compute_dimensionless()
-
-print("test")
