@@ -9,8 +9,6 @@ from typing import Dict, Sequence
 ELEMENTARY_CHARGE = 1.602176634e-19  # Coulombs
 HBAR = 1.054571817e-34  # Joule * seconds
 
-
-@dataclass
 class RCSJParams:
     """Stores RCSJ junction parameters in SI and computes dimensionless values."""
 
@@ -75,6 +73,9 @@ class RCSJParams:
 
 class RCSJModel(RCSJParams):
     """Implements the RCSJ ODE and related helper computations."""
+    
+    def __init__(self, ..., **kwargs)
+        super().__init__(**kwargs)
 
     def drive_term(self, tau: float) -> float:
         """Compute the normalized drive current i_dc + i_ac * cos(Omega * tau + phi_drive)."""
@@ -91,17 +92,3 @@ class RCSJModel(RCSJParams):
     def potential(self, phi: float) -> float:
         """Dimensionless tilted-washboard potential for given phase."""
         return 1.0 - cos(phi) - self.params.i_dc * phi
-
-class RCSJ:
-    """Superclass for RCSJ-based models that owns the parameter set."""
-
-    def __init__(self, params: RCSJParams) -> None:
-        self.params = params
-
-    def update_params(self, **kwargs: float) -> None:
-        """Update parameter values and recompute derived quantities."""
-        for name, value in kwargs.items():
-            if not hasattr(self.params, name):
-                raise AttributeError(f"Unknown parameter: {name}")
-            setattr(self.params, name, value)
-        self.params.compute_dimensionless()
