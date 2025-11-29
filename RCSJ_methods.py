@@ -1,6 +1,7 @@
-
+"""RCSJ model parameters and solver utilities."""
 import numpy as np
 from scipy.integrate import solve_ivp
+
 
 class RCSJParams:
     """
@@ -30,9 +31,9 @@ class RCSJParams:
         # Physical parameters
         self.e_charge = 1.602176634e-19 
         self.hbar = 1.054571817e-34
-        self.Ic = Ic 
-        self.C = C 
-        self.R = R 
+        self.Ic = Ic
+        self.C = C
+        self.R = R
         self.I_dc = I_dc
         self.I_ac = I_ac
         self.omega_drive = omega_drive
@@ -40,7 +41,7 @@ class RCSJParams:
 
         # self. is required to run functions defined within the class.
         self.compute_dimensionless()
-        
+
 
 
     def compute_dimensionless(self):
@@ -73,7 +74,7 @@ class RCSJParams:
 
 class RCSJModel(RCSJParams):
     """Implements the RCSJ ODE and related helper computations."""
-    
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -96,7 +97,7 @@ class RCSJModel(RCSJParams):
     def potential(self, phi):
         """Dimensionless tilted-washboard potential for given phase."""
         return 1.0 - np.cos(phi) - self.i_dc * phi
-    
+
 
     def solve(self, *args, **kwargs):
         #*args and **kwargs is included here so that the parent class' solve (this one)
