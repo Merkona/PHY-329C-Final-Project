@@ -134,6 +134,103 @@ $$
 ```
 we get the second Josephson equation.
 
+## 2. The RCSJ Model:
+
+The Resistively and Capacitively Shunted Junction (RCSJ) model (also known as the Stewart–McCumber model) is the standard classical model for Josephson junction dynamics.
+
+This model comes from viewing the Josephson junction as a capacitor with a dielectric medium. The two superconducting sides are like the plates of a capacitor, and the thin insulator between them is similar to a dielectric.
+
+In this context, we can consider three different currents. The first is the Josephson current as described earlier, the second is a resistive current caused by the tunneling of normal electrons through the insulator, and the third is a capacitive current caused by the capacitor-like nature of the junction.
+
+This gives us three terms for the current:
+```math
+$$
+\begin{align}
+&I_{s}=I_{c}\sin(\varphi) \\
+&I_{R}=\frac{V}{R} \\
+&I_{C}=C \frac{dV}{dt}
+\end{align}
+$$
+```
+
+Where $I_{s}$ is the Josephson current as previously described, $I_{R}$ is the resistive current, and $I_{C}$ is the displacement current from the capacitor.
+
+Using Kirchhoff's Law, we have that the total current is then
+
+```math
+$$
+\begin{align}
+I=I_{s}+I_{R}+I_{C} 
+\end{align}
+$$
+```
+
+From the second Josephson equation, we see that 
+
+```math
+$$
+\begin{align}
+V(t)= \frac{\hbar}{2eV}\dot{\varphi}(t)
+\end{align}
+$$
+```
+
+Plugging this in to the current terms and rearranging then yields the following differential equation:
+
+```math
+$$
+\begin{align}
+C \ddot{\varphi}+\frac{1}{R}\dot{\varphi}+\frac{2eI_{c}}{\hbar}\sin(\varphi)=\frac{2e}{\hbar}I
+\end{align}
+$$
+```
+
+Thus Josephson Junction dynamics can be approximated by a driven damped equation of motion.
+
+We can simplify this further by defining the normalized currents 
+
+$$\overline{I}_{c}=\frac{2eI_{c}}{\hbar}$ and $\overline{I}=\frac{2eI}{\hbar}$, and then dividing by $\overline{I_{c}}$ to get
+
+```math
+$$
+\begin{align}
+\frac{C}{\overline{I}_{c}} \ddot{\varphi}+\frac{1}{\overline{I}_{c}R}\dot{\varphi}+\sin(\varphi)=\frac{\overline{I}}{\overline{I}_{c}}
+\end{align}
+$$
+```
+
+In the following sections, I will take $I_{c}=\overline{I}_{c}\text{, }I=\overline{I}$.
+
+## 3. Washboard Potential:
+The differential equation we obtained in the RCSJ model is of the form
+
+```math
+$$
+\begin{align}
+m \ddot{x}+\gamma  \dot{x}+ \frac{dU}{dx}=0
+\end{align}
+$$
+```
+
+In this analogy, $\frac{dU}{d\varphi}={I}_{c}\sin(\varphi)-I$. Integrating this gives
+
+```math
+$$
+\begin{align}
+U(\varphi)=-I_{c}\cos(\varphi)-I\varphi
+\end{align}
+$$
+```
+
+This potential is known as a washboard potential due to it's downward sloped oscillating features. 
+
+The washboard potential provides a convenient feature for understanding the zero-voltage state at $I_{c}>I$ versus the finite-voltage state for $I_{c}< I$. 
+
+For the first case, the potential has local minima corresponding to zero voltage via the 2nd Josephson equation. Meanwhile for the second case, there is no such minima, and so there is a always a change in $\varphi$ and therefore finite voltage.
+
+## 4. Shapiro Steps:
+(To do if we decide to investigate this)
+
 # Basic Usage
 The folder titled `RCSJ Basis` outlines the classes and methods we use that form the basis for exploring JJs. The foundational python file of this project is `RCSJ_Core.py`, which contains the classes `RCSJParams`, `RCSJModel`, and `RCSJSolve`. These classes work sequentially to set up, model, and solve the relevant ODEs respectively.
 
