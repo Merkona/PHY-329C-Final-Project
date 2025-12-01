@@ -160,38 +160,3 @@ class RCSJSolve(RCSJModel):
             atol=atol,
         )
         return sol
-
-if __name__ == "__main__":
-    # Example parameters
-    jj = RCSJSolve(
-        Ic=1e-6,          # 1 µA
-        C=1e-12,          # 1 pF
-        R=1e3,            # 1 kΩ
-        I_dc=0.5e-6,      # 0.5 µA
-        I_ac=0.2e-6,      # 0.2 µA
-        omega_drive=2e9,  # 2 GHz
-        phi_drive=0.0,
-    )
-
-    # Initial conditions in dimensionless time
-    # start at bottom of well, zero velocity
-    y0 = [0.0, 0.0]
-
-    # Arbitrary range of Tau
-    tau_span = (0.0, 100.0)
-
-    #5000 equivalent time steps that span tau
-    t_eval = np.linspace(*tau_span, 5000)
-
-    sol = jj.solve(y0=y0, tau_span=tau_span, t_eval=t_eval)
-
-    # Print final phase and phase velocity, along with status and message
-    print("Success:", sol.success)
-    print("Final phi:", sol.y[0, -1])
-    print("Final phi_dot:", sol.y[1, -1])
-
-    # Status 0 means the solver ran smoothly,
-    # 1 means it stopped upon a certian inputted condition
-    # -1 means it failed
-    print("status:", sol.status)
-    print("message:", sol.message)
