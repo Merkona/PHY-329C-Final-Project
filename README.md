@@ -1,5 +1,5 @@
 # Simulating RCSJ Josephson dynamics in singular and coupled systems
-### Created by Tyler Sachs, Austin Merkel, Ellie Howard, Chetan Mehta
+### Created by Tyler Sachs, Austin Merkel, Ellie Howard, and Chetan Mehta
 
 # Getting Started
 
