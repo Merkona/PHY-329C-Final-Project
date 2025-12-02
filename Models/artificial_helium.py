@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 from matplotlib import animation
+from matplotlib.animation import PillowWriter
 
 # Ensure repository root is on sys.path for direct script execution
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -380,7 +381,7 @@ def animate_phase_space(sol, which="phi1", interval=12):
     return anim, fig, ax
 
 
-def animate_heatmap_trajectory(model, sol, n_grid=200, interval=12):
+def animate_heatmap_trajectory(model, sol, n_grid=200, interval=12, max_frames=None):
     """
     Animate trajectory on the 2D potential heatmap with accumulating path.
 
@@ -422,11 +423,17 @@ def animate_heatmap_trajectory(model, sol, n_grid=200, interval=12):
         point.set_data([phi1_traj[i]], [phi2_traj[i]])
         return line, point
 
+    frame_indices = (
+        np.arange(len(phi1_traj))
+        if max_frames is None
+        else np.linspace(0, len(phi1_traj) - 1, max_frames, dtype=int)
+    )
+
     anim = animation.FuncAnimation(
         fig,
         update,
         init_func=init,
-        frames=len(phi1_traj),
+        frames=frame_indices,
         interval=interval,
         blit=True,
     )
@@ -503,6 +510,14 @@ if __name__ == "__main__":
     )
 
     # Animated heatmap trajectory
-    anim_heatmap, fig_anim, ax_anim = animate_heatmap_trajectory(model, sol)
+    anim_heatmap, fig_anim, ax_anim = animate_heatmap_trajectory(
+        model, sol, max_frames=900
+    )
+    try:
+        # Match on-screen speed (~1/interval) and boost resolution via DPI
+        writer = PillowWriter(fps=int(1000 / 12))  # interval=12 ms -> ~83 fps
+        anim_heatmap.save("helium_heatmap.gif", writer=writer, dpi=300)
+    except Exception as e:
+        print(f"Failed to save helium_heatmap.gif: {e}")
 
     plt.show()
