@@ -246,6 +246,93 @@ def plot_potential_overlay_line(ax, model, sol):
     return ax
 
 
+def plot_helium_probability_heatmap(ax, r_max=5.0, nr=4000, Z=2.0, a0=1.0):
+    """
+    Simple two-electron probability density heatmap for helium (independent
+    hydrogenic 1s orbitals, uncorrelated).
+    Plots |psi(r1)|^2 |psi(r2)|^2 over radial coordinates.
+    """
+    r = np.linspace(-r_max, r_max, nr)
+    R1, R2 = np.meshgrid(r, r)
+    rho1 = np.exp(-2 * Z * np.abs(R1) / a0)
+    rho2 = np.exp(-2 * Z * np.abs(R2) / a0)
+    rho = rho1 * rho2
+    hm = ax.pcolormesh(R1, R2, rho, shading="auto", cmap="viridis_r")
+    cb = plt.colorbar(hm, ax=ax)
+    cb.set_label(r"Relative probability density")
+    ax.set_xlabel(r"$r_1$ (Bohr radii)")
+    ax.set_ylabel(r"$r_2$ (Bohr radii)")
+    ax.set_title("Electron Positional Probability Density (He)")
+    ax.set_xlim(-0.12, 0.12)
+    ax.set_ylim(-0.12, 0.12)
+    return ax
+
+
+def compute_avg_voltage_coupled(sol, discard=0.5):
+    """
+    Use the average of phi1_dot and phi2_dot (normalized voltage proxy).
+    discard: fraction of initial samples to drop as transient.
+    """
+    n = sol.y.shape[1]
+    start = int(discard * n)
+    phi1_dot = sol.y[1, start:]
+    phi2_dot = sol.y[3, start:]
+    return 0.5 * (np.mean(phi1_dot) + np.mean(phi2_dot))
+
+
+def sweep_vi_coupled(params, i_dc_values, y0, tau_span=(0.0, 20.0), num_points=800):
+    """
+    Sweep DC bias and compute average normalized voltage for the coupled system.
+    AC drive is turned off for a clean superconducting IV.
+    """
+    voltages = []
+    for i_dc in i_dc_values:
+        p = dict(params)
+        p["I_dc"] = i_dc
+        p["I_ac"] = 0.0
+        model, sol = run_sim(p, y0, tau_span, num_points=num_points)
+        if not sol.success:
+            voltages.append(np.nan)
+            continue
+        voltages.append(compute_avg_voltage_coupled(sol))
+    return np.array(voltages)
+
+
+def sweep_shapiro_coupled(
+    params, i_dc_values, y0, tau_span=(0.0, 50.0), num_points=1000
+):
+    """
+    Sweep DC bias with AC drive on to show Shapiro steps in the coupled system.
+    """
+    voltages = []
+    for i_dc in i_dc_values:
+        p = dict(params)
+        p["I_dc"] = i_dc
+        model, sol = run_sim(p, y0, tau_span, num_points=num_points)
+        if not sol.success:
+            voltages.append(np.nan)
+            continue
+        voltages.append(compute_avg_voltage_coupled(sol))
+    return np.array(voltages)
+
+
+def plot_vi_curve(ax, currents, voltages, Ic):
+    ax.plot(currents / Ic, voltages, marker="o", lw=1.2)
+    ax.set_xlabel(r"Normalized bias $I/I_c$")
+    ax.set_ylabel(r"Normalized voltage $\langle \dot{\phi} \rangle$")
+    ax.set_title("IV Curve (coupled junctions)")
+    ax.legend()
+    return ax
+
+
+def plot_shapiro(ax, currents, voltages, Ic):
+    ax.plot(currents / Ic, voltages, marker="o", lw=1.2)
+    ax.set_xlabel(r"Normalized bias $I/I_c$")
+    ax.set_ylabel(r"Normalized voltage $\langle \dot{\phi} \rangle$")
+    ax.set_title("Shapiro Steps (with AC drive)")
+    return ax
+
+
 def animate_phase_space(sol, which="phi1", interval=12):
     """
     Animate a phase-space trajectory (phi, phi_dot) with accumulating path.
@@ -367,6 +454,12 @@ if __name__ == "__main__":
     if not sol.success:
         raise RuntimeError(f"Solver failed: {sol.message}")
 
+    # IV curve (DC sweep, no AC drive)
+    i_dc_sweep = np.linspace(-1.5 * params["Ic"], 1.5 * params["Ic"], 35)
+    vi_vals = sweep_vi_coupled(
+        params, i_dc_sweep, y0, tau_span=(0.0, 40.0), num_points=1200
+    )
+
     # Time-domain views
     fig1, axes1 = plt.subplots(2, 2, figsize=(12, 8))
     plot_phases_time(axes1[0, 0], sol)
@@ -382,6 +475,11 @@ if __name__ == "__main__":
     plot_phase_space(axes2[2], sol, which="delta")
     fig2.tight_layout()
 
+    # IV plot
+    fig_iv, ax_iv = plt.subplots(figsize=(5, 4))
+    plot_vi_curve(ax_iv, i_dc_sweep, vi_vals, params["Ic"])
+    fig_iv.tight_layout()
+
     # Potential landscape visualizations
     fig3, ax3 = plt.subplots(figsize=(6, 5))
     plot_potential_heatmap(ax3, model, sol)
@@ -391,6 +489,11 @@ if __name__ == "__main__":
     ax4 = fig4.add_subplot(111, projection="3d")
     plot_potential_surface(ax4, model, sol)
     fig4.tight_layout()
+
+    # Helium probability density heatmap (uncorrelated 1s×1s)
+    fig5, ax5 = plt.subplots(figsize=(6, 5))
+    plot_helium_probability_heatmap(ax5)
+    fig5.tight_layout()
 
     # Animated phase-space trajectories
     anim_phi1, fig_phi1, ax_phi1 = animate_phase_space(sol, which="phi1", interval=10)
