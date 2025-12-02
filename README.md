@@ -64,7 +64,7 @@ This requirement, gauge invariance, forces the direct relationship:
 
 ```math
 $$
-\frac{d\varphi}{dt} = \frac{2e}{\hbar} V(t)
+\boxed{\frac{d\varphi}{dt} = \frac{2e}{\hbar} V(t)}
 $$
 ```
 
@@ -77,7 +77,7 @@ In the ideal model, the tunneling current is proportional to the sine of the pha
 
 ```math
 $$
-I = I_c \sin(\varphi)
+\boxed{I = I_c \sin(\varphi)}
 $$
 ```
 
@@ -153,11 +153,11 @@ We can simplify this further by defining the normalized currents.
 Dividing the RCSJ equation by $\overline{I_{c}}$ gives:
 
 ```math
-\frac{C}{\overline{I}_c} \frac{d^2\varphi}{dt^2}
+\boxed{\frac{C}{\overline{I}_c} \frac{d^2\varphi}{dt^2}
 + \frac{1}{R \overline{I}_c} \frac{d\varphi}{dt}
 + \sin(\varphi)
 =
-\frac{\overline{I}}{\overline{I}_c}
+\frac{\overline{I}}{\overline{I}_c}}
 ```
 
 In later sections, we take $I_{c}=\overline{I}_{c}\text{, }I=\overline{I}$. to simplify expressions.
@@ -178,7 +178,7 @@ In this analogy, $\frac{dU}{d\varphi}={I}_{c}\sin(\varphi)-I$. Integrating this 
 ```math
 $$
 \begin{align}
-U(\varphi)=-I_{c}\cos(\varphi)-I\varphi
+\boxed{U(\varphi)=-I_{c}\cos(\varphi)-I\varphi}
 \end{align}
 $$
 ```
