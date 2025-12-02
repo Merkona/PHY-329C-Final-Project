@@ -177,15 +177,17 @@ m \ddot{x}+\gamma  \dot{x}+ \frac{dU}{dx}=0
 $$
 ```
 
-In this analogy, $\frac{dU}{d\varphi}={i}_{c}\sin(\varphi)-i$. Integrating this gives
+In this analogy, $\frac{dU}{d\varphi}=\sin(\varphi)-i$. Integrating this gives
 
 ```math
 $$
 \begin{align}
-\boxed{U(\varphi)=-i_{c}\cos(\varphi)-i\varphi}
+U(\varphi)=1-\cos(\varphi)-i\varphi
 \end{align}
 $$
 ```
+
+Where the constant $1$ is arbitrarily chosen.
 
 This potential is known as a washboard potential due to it's downward sloped oscillating features.
 
