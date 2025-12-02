@@ -9,199 +9,160 @@ We use Python 3 with the following packages:
 - `SciPy`
 
 # Introduction
-Superconducting circuits have become one of the most powerful platforms for realizing controllable quantum systems. In particular, circuits that utilize the superconducting Josephson Junction (JJ) to provide a non-linear inductive element have formed the backbone of modern quantum technologies, including qubits, superconducting resonators, and macroscopic quantum devices. 
+Superconducting circuits have become one of the most powerful platforms for realizing controllable quantum systems. In particular, circuits that utilize the superconducting Josephson Junction (JJ) to provide a non-linear inductive element have formed the backbone of modern quantum technologies, including qubits, superconducting resonators, and macroscopic quantum devices.
 
-Using a Resistively and Capacitively Shunted Junction (RCSJ) model, we can explore the classical dynamics of Josephson Junctions by observing this system as it exhibits hysteresis, phase slips, Shapiro steps, and anharmonic energy levels. Understanding these classical dynamics provides both physical intuition and a computational foundation for exploring more complex superconducting systems. To that end, this repository was made to: 
+Using a Resistively and Capacitively Shunted Junction (RCSJ) model, we can explore the classical dynamics of Josephson Junctions by observing this system as it exhibits hysteresis, phase slips, Shapiro steps, and anharmonic energy levels. Understanding these classical dynamics provides both physical intuition and a computational foundation for exploring more complex superconducting systems. To that end, this repository was made to:
 
 - Implement modular RCSJ solvers capable of simulating single junctions, multiple junctions in series, and junction–capacitor networks.
 - Demonstrate how these circuits can serve as toy models for artificial atoms, including hydrogen-like and helium-like structures formed from coupled junctions.
 - Explore how the JJ’s intrinsic nonlinearity generates anharmonic energy levels—an essential ingredient for isolating qubit states or modeling multi-electron atomic behavior.
 
 # Theory
-## 1. The Josephson Junction: 
 
-A Josephson Junction is comprised of two superconducting materials with a thin insulator placed between them. When these two materials become superconducting, a current flows across the insulating barrier without any applied voltage, and when a voltage is applied it causes this current to oscillate.
+## 1. The Josephson Junction
 
-The behavior of these phenomenon is captured in the **Josephson Equations**:
+A Josephson Junction is formed by two superconductors separated by a thin insulating barrier.  
+When both materials are in the superconducting state, Cooper pairs are able to tunnel through the barrier, producing a supercurrent even when no voltage is applied.  
+When a voltage is applied, this supercurrent oscillates at a well-defined frequency.
 
-```math
-$$
-\begin{align}
-&I(t)=I_{c}\sin(\mathcal{\varphi}(t)) \\
-&\frac{ \partial \varphi }{ \partial t } = \frac{2eV(t)}{\hbar}
-\end{align}
-$$
-```
-Where
-- $I(t)$ is the current across the junction
-- $V(t)$ is the voltage across the junction
-- $I_{c}$ is a parameter known as the critical current
-
-To derive these, we must start with the order parameters of the superconductors. The Ginzburg-Landau order parameter can be taken as the wavefunction of a Cooper pair in superconductor $A$ or $B$, and takes the following form:
+The behavior of the junction is captured by the **Josephson Equations**:
 
 ```math
 $$
 \begin{align}
-\psi_{A}=\sqrt{ n_{A} }e^{i\phi_{A}}\text{, }\psi_{B}=\sqrt{ n_{B} }e^{i\phi_{B}}
+&I(t) = I_c \sin(\varphi(t)) \\
+&\frac{d\varphi}{dt} = \frac{2e}{\hbar} V(t)
 \end{align}
 $$
 ```
-Where $n_{A\text{, }B}$ is the density of Cooper pairs, and $\phi_{A\text{, }B}$ is the phase of each wavefunction. 
 
-If we apply a voltage across the junction, then since each Cooper pair consists of 2 electrons, and thus has charge $2e$, we get an energy difference of $2eV$.
+**Where:**
+- $I(t)$: current across the junction  
+- $V(t)$: voltage across the junction  
+- $I_c$: critical current  
+- $\varphi = \phi_B - \phi_A$: phase difference between the superconductors
 
-Using the Schrodinger equation then gives us two differential equations to describe this system. A system of this form is called a two-level system.
+## 2. Order Parameters and the Origin of the Josephson Phase
+
+Each superconductor is described by a macroscopic wavefunction (Ginzburg–Landau / BCS order parameter):
 
 ```math
 $$
-\begin{align}
-i\hbar \frac{ \partial  }{ \partial t } \begin{pmatrix}
-\sqrt{ n_{A} }e^{i\phi_{A}} \\
-\sqrt{ n_{B} }e^{i\phi_{B}}
-\end{pmatrix}=\begin{pmatrix}
-eV & K \\
-K & -eV 
-\end{pmatrix}\begin{pmatrix}
-\sqrt{ n_{A} }e^{i\phi_{A}} \\
-\sqrt{ n_{B} }e^{i\phi_{B}}
-\end{pmatrix}
-\end{align}
+\psi_A = \sqrt{n_A}\, e^{i\phi_A}, \qquad \psi_B = \sqrt{n_B}\, e^{i\phi_B}
 $$
 ```
 
-Here $K$ is a parameter intrinsic to the junction. 
+**Here:**
+- $n_A$ and $n_B$: Cooper-pair densities  
+- $\phi_A$ and $\phi_B$: phases of the superconductors  
 
-To solve the first equation, we see that
+When a voltage $V$ is applied across the junction, a Cooper pair (charge $2e$) experiences an energy shift of $2eV$.  
+In electromagnetism, physical observables must remain unchanged when we shift the scalar potential Φ or vector potential 𝐴.
+For a charged condensate, this means that if the potentials change, the superconducting phases must shift too, in such a way that measurable quantities remain the same.
+
+This requirement, gauge invariance, forces the direct relationship:
 
 ```math
 $$
-\begin{align}
-\frac{ \partial  }{ \partial t } (\sqrt{ n_{A} }e^{i\phi_{A}})=\dot{\sqrt{ n_{A} }}e^{i\phi_{A}}+i\sqrt{ n_{A} }\dot{\phi_{A}}e^{i\phi_{A}}=e^{i\phi_{A}}(\dot{\sqrt{ n_{A} }}+i\sqrt{ n_{A} }\dot{\phi_{A}})
-\end{align}
+\frac{d\varphi}{dt} = \frac{2e}{\hbar} V(t)
 $$
 ```
 
-Plugging this into the SE gives
+This is the **AC Josephson relation**, showing how voltage directly controls the time evolution of the superconducting phase.
+
+## 3. Tunneling and the Supercurrent
+
+Weak tunneling between the superconductors couples the two order parameters.  
+In the ideal model, the tunneling current is proportional to the sine of the phase difference:
 
 ```math
 $$
-\begin{align}
-e^{i\phi_{A}}(\dot{\sqrt{ n_{A} }}+i\sqrt{ n_{A} }\dot{\phi_{A}})&=\frac{1}{i\hbar}(eV\sqrt{ n_{A} }e^{i\phi_{A}}+K\sqrt{ n_{B} }e^{i\phi_{B}}) \\
-(\dot{\sqrt{ n_{A} }}+i\sqrt{ n_{A} }\dot{\phi_{A}})&=\frac{1}{i\hbar}(eV\sqrt{ n_{A} }+K\sqrt{ n_{B} }e^{i\varphi})
-\end{align}
+I = I_c \sin(\varphi)
 $$
 ```
 
-where $\varphi=\phi_{B}-\phi_{A}$ is the Josephson phase.
 
-If we add the conjugate of this equation to itself, we can get an equation for $\dot{\sqrt{ n_{A} }}$,
-
-```math
-$$
-\begin{align}
-&2\dot{\sqrt{n_{A} }}=\frac{2\dot{n}_{A}}{2\sqrt{ n_{A} }}=\frac{K\sqrt{ n_{B} }}{\hbar}2\sin(\varphi) \\
-&\dot{n}_{A}= \frac{2K\sqrt{ n_{A}n_{B} }}{\hbar}\sin(\varphi)
-\end{align}
-$$
-```
-
-If we instead subtract the two conjugate equations, we can eliminate $\dot{\sqrt{ n_{A} }}$ to get
-
-```math
-$$
-\begin{align}
-\dot{\phi}_{A}= -\frac{1}{\hbar}\left( eV+K\sqrt{ \frac{n_{B}}{n_{A}} } \cos(\varphi)\right)
-\end{align}
-$$
-```
-
-Similarly, we can find
-
-```math
-$$
-\begin{align}
-&\dot{n}_{B}= -\frac{2K\sqrt{ n_{A}n_{B} }}{\hbar}\sin(\varphi) \\
-&\dot{\phi}_{B}= \frac{1}{\hbar}\left( eV-K\sqrt{ \frac{n_{B}}{n_{A}} } \cos(\varphi)\right)
-\end{align}
-$$
-```
-
-Since the time derivative of $n_{A}$ is proportional to current, then if $n_{A}\approx n_{B}$, we get the first Josephson equation, and by combining  
-```math 
-$$
-\dot{\varphi}=\dot{\phi}_{B}-\dot{\phi}_{A}
-$$
-```
-we get the second Josephson equation.
-
-## 2. The RCSJ Model:
+## **4. The RCSJ Model**
 
 The Resistively and Capacitively Shunted Junction (RCSJ) model (also known as the Stewart–McCumber model) is the standard classical model for Josephson junction dynamics.
 
-This model comes from viewing the Josephson junction as a capacitor with a dielectric medium. The two superconducting sides are like the plates of a capacitor, and the thin insulator between them is similar to a dielectric.
+This model starts by viewing the Josephson junction as having **three parallel current channels**:
 
-In this context, we can consider three different currents. The first is the Josephson current as described earlier, the second is a resistive current caused by the tunneling of normal electrons through the insulator, and the third is a capacitive current caused by the capacitor-like nature of the junction.
+1. **The Josephson supercurrent** (Cooper-pair tunneling)
+2. **A resistive current** from normal electrons tunneling through the barrier
+3. **A capacitive displacement current** due to the junction’s intrinsic capacitance
 
-This gives us three terms for the current:
-```math
-$$
-\begin{align}
-&I_{s}=I_{c}\sin(\varphi) \\
-&I_{R}=\frac{V}{R} \\
-&I_{C}=C \frac{dV}{dt}
-\end{align}
-$$
-```
-
-Where $I_{s}$ is the Josephson current as previously described, $I_{R}$ is the resistive current, and $I_{C}$ is the displacement current from the capacitor.
-
-Using Kirchhoff's Law, we have that the total current is then
+These appear as:
 
 ```math
-$$
-\begin{align}
-I=I_{s}+I_{R}+I_{C} 
-\end{align}
-$$
+I_s = I_c \sin(\varphi)
 ```
-
-From the second Josephson equation, we see that 
 
 ```math
-$$
-\begin{align}
-V(t)= \frac{\hbar}{2eV}\dot{\varphi}(t)
-\end{align}
-$$
+I_R = \frac{V}{R}
 ```
-
-Plugging this in to the current terms and rearranging then yields the following differential equation:
 
 ```math
-$$
-\begin{align}
-C \ddot{\varphi}+\frac{1}{R}\dot{\varphi}+\frac{2eI_{c}}{\hbar}\sin(\varphi)=\frac{2e}{\hbar}I
-\end{align}
-$$
+I_C = C \frac{dV}{dt}
 ```
 
-Thus Josephson Junction dynamics can be approximated by a driven damped equation of motion.
-
-We can simplify this further by defining the normalized currents 
-
-$$\overline{I}_{c}=\frac{2eI_{c}}{\hbar}$ and $\overline{I}=\frac{2eI}{\hbar}$, and then dividing by $\overline{I_{c}}$ to get
+Using Kirchhoff’s law, the total current through the junction is:
 
 ```math
-$$
-\begin{align}
-\frac{C}{\overline{I}_{c}} \ddot{\varphi}+\frac{1}{\overline{I}_{c}R}\dot{\varphi}+\sin(\varphi)=\frac{\overline{I}}{\overline{I}_{c}}
-\end{align}
-$$
+I = I_s + I_R + I_C
 ```
 
-In the following sections, I will take $I_{c}=\overline{I}_{c}\text{, }I=\overline{I}$.
 
-## 3. Washboard Potential:
+### **Using the Josephson phase–voltage relation**
+
+From the second Josephson equation,
+
+```math
+V(t) = \frac{\hbar}{2e} \frac{d\varphi}{dt}
+```
+
+
+Taking a time derivative gives:
+
+```math
+\frac{dV}{dt} = \frac{\hbar}{2e} \frac{d^2\varphi}{dt^2}
+```
+
+Substituting these into the current terms yields the classical RCSJ differential equation:
+
+```math
+C \frac{d^2\varphi}{dt^2}
++ \frac{1}{R} \frac{d\varphi}{dt}
++ \frac{2e I_c}{\hbar} \sin(\varphi)
+=
+\frac{2e}{\hbar} I
+```
+
+This equation describes a **driven, damped, nonlinear oscillator**, and is the fundamental equation solved throughout this repository.
+
+
+### **Non-dimensionalizing the equation**
+
+We can simplify this further by defining the normalized currents.
+
+```math
+\overline{I}_c = \frac{2e I_c}{\hbar}, \qquad
+\overline{I}   = \frac{2e I}{\hbar}
+```
+
+Dividing the RCSJ equation by $\overline{I_{c}}$ gives:
+
+```math
+\frac{C}{\overline{I}_c} \frac{d^2\varphi}{dt^2}
++ \frac{1}{R \overline{I}_c} \frac{d\varphi}{dt}
++ \sin(\varphi)
+=
+\frac{\overline{I}}{\overline{I}_c}
+```
+
+In later sections, we take $I_{c}=\overline{I}_{c}\text{, }I=\overline{I}$. to simplify expressions.
+
+## 5. Washboard Potential:
 The differential equation we obtained in the RCSJ model is of the form
 
 ```math
@@ -222,13 +183,15 @@ U(\varphi)=-I_{c}\cos(\varphi)-I\varphi
 $$
 ```
 
-This potential is known as a washboard potential due to it's downward sloped oscillating features. 
+This potential is known as a washboard potential due to it's downward sloped oscillating features.
 
-The washboard potential provides a convenient feature for understanding the zero-voltage state at $I_{c}>I$ versus the finite-voltage state for $I_{c}< I$. 
+The washboard potential provides a convenient feature for understanding the zero-voltage state at $I_{c}>I$ versus the finite-voltage state for $I_{c}< I$.
 
 For the first case, the potential has local minima corresponding to zero voltage via the 2nd Josephson equation. Meanwhile for the second case, there is no such minima, and so there is a always a change in $\varphi$ and therefore finite voltage.
 
-## 4. Shapiro Steps:
+
+
+## 6. Shapiro Steps:
 (To do if we decide to investigate this)
 
 # Basic Usage
