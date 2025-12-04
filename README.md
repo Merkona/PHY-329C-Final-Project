@@ -222,7 +222,51 @@ Beyond the core RCSJ models, the repository contains higher-level files that con
 
 In this organization, the physics and numerics of the RCSJ model remain isolated within `RCSJ_Core.py`, the concrete physical systems (single and coupled junctions) are defined in their own dedicated modules, and the artificial atom files act as application-level examples that tie everything together. This structure keeps the codebase clear, extensible, and easy to navigate for anyone wishing to explore Josephson junction dynamics or build upon the artificial-atom analogies developed in this project.
 
+### Directory Structure:
+```
+Models/
+└── artificial_helium.py
+│
+└── artificial_hydrogen.py
+
+RCSJ_Basis/
+└── RCSJ_core.py
+│
+└── coupled_junction.py
+│
+└── single_junction.py
+
+Tests/
+└── test_coupled_junction.py
+│
+└── test_rcsj.py
+
+```
+
+
 # Results
+There are many types of plots available in `artifical_helium.py` and `artifical_hydrogen.py`. Here we showcase a section of them to demonstrate features of the code and Josephson junction dynamics.
+
+## Tilted Washboard
+<img width="700" height="400" alt="tilted_washboard" src="https://github.com/user-attachments/assets/a1b1f32f-6a41-4ceb-8cf9-ea49d4a2cd7f" />
+
+
+## I-V Curve
+<img width="591" height="472" alt="Screenshot_774" src="https://github.com/user-attachments/assets/e2e44b9f-7590-4ebf-950f-cca67c4c8684" />
+
+## Phase vs `e^{-}` radius
+<img width="871" height="496" alt="Screenshot_775" src="https://github.com/user-attachments/assets/20cc4708-d444-4a11-93b9-9c420beab38f" />
+
+<img width="870" height="500" alt="Screenshot_776" src="https://github.com/user-attachments/assets/18ec4a6c-11b2-41cf-b495-010b6fc10093" />
+
+## Washboard potential vs Hydrogen potential
+(gif of washboard) (gif of hydrogen potential)
+
+
+## Washboard potential vs Helium potential
+<img width="700" height="500" alt="3D_washboard" src="https://github.com/user-attachments/assets/478a5d4b-1d85-4858-8d35-ec552016f13c" />
+
+<img width="600" height="500" alt="helium_WF_heatmap" src="https://github.com/user-attachments/assets/3f741543-8b9f-42a9-92dd-87f577d89597" />
 
 
 # Resources
