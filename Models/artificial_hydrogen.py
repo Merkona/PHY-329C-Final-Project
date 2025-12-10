@@ -1,11 +1,11 @@
 """
-Artificial hydrogen model built on the single-junction RCSJ solver.
+Artificial hydrogen playground built on the single-junction RCSJ solver.
 
-This module provides convenience helpers to:
-- run a single-junction RCSJ simulation
-- visualize phase vs time, energy partition, phase space (with direction),
-  potential overlay with time-coded trajectory, and a phase-space
-  animation.
+What this module provides:
+- Thin wrapper around SingleRCSJSolve to run single-junction simulations.
+- Plotting utilities for time traces, energy partition, phase space, and potential overlays.
+- Animations for phase space and bead-on-washboard visuals.
+- Convenience sweeps for IV curves and Shapiro steps.
 """
 
 import pathlib
@@ -34,26 +34,29 @@ def run_sim(
     **solve_kwargs,
 ):
     """
-    Run a single-junction RCSJ simulation.
+    Run a single-junction RCSJ simulation on a uniform time grid (or provided t_eval).
 
     Parameters
     ----------
     params : dict
-        Keyword arguments passed to SingleRCSJSolve (e.g., Ic, C, R, I_dc, I_ac,
-        omega_drive, phi_drive).
+        Keyword args for SingleRCSJSolve (Ic, C, R, I_dc, I_ac, omega_drive, phi_drive).
     y0 : sequence
         Initial conditions [phi0, phi_dot0].
     tau_span : tuple(float, float)
         Dimensionless time window (tau_start, tau_end).
     num_points : int, optional
         Number of evaluation points for t_eval (uniform grid).
+    t_eval : array-like, optional
+        Explicit time samples; overrides the uniform grid if provided.
     **solve_kwargs :
         Additional arguments forwarded to solve() (rtol, atol, max_step, etc.).
 
     Returns
     -------
     model : SingleRCSJSolve
-    sol : OdeResult from scipy.integrate.solve_ivp
+        Solver object with parameters set from `params`.
+    sol : OdeResult
+        SciPy integrator output containing states and metadata.
     """
     tau_start, tau_end = map(float, tau_span)
     model = SingleRCSJSolve(**params)
@@ -79,7 +82,7 @@ def _potential_grid(phi_traj, n_grid=400):
 # Plotting helpers
 # --------------------------------------------------------------------------- #
 def plot_phase_time(ax, sol):
-    """Phase vs dimensionless time."""
+    """Plot junction phase versus dimensionless time on a supplied Axes."""
     ax.plot(sol.t, sol.y[0], lw=1.5)
     ax.set_xlabel(r"Dimensionless time $\tau$")
     ax.set_ylabel(r"Phase $\phi$")
@@ -89,7 +92,7 @@ def plot_phase_time(ax, sol):
 
 def plot_energy_split(ax, model, sol):
     """
-    Plot kinetic, potential, and total energy vs time.
+    Plot kinetic, potential, and total energy versus time.
     """
     phi = sol.y[0]
     phi_dot = sol.y[1]
@@ -109,7 +112,16 @@ def plot_energy_split(ax, model, sol):
 
 
 def plot_phase_space(ax, sol):
-    """Phase-space trajectory: phi_dot vs phi with direction cues."""
+    """
+    Phase-space trajectory (phi, phi_dot) with direction cues.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes on which to draw the trajectory.
+    sol : OdeResult
+        Solution object from `run_sim`.
+    """
     phi = sol.y[0]
     phi_dot = sol.y[1]
 
@@ -144,7 +156,7 @@ def plot_phase_space(ax, sol):
 
 def plot_potential_overlay(ax, model, sol, n_grid=400):
     """
-    Plot tilted washboard potential with a time-coded trajectory overlay.
+    Tilted washboard potential with a time-coded trajectory overlay.
     """
     phi_traj = sol.y[0]
     grid = _potential_grid(phi_traj, n_grid)
@@ -173,7 +185,13 @@ def plot_potential_overlay(ax, model, sol, n_grid=400):
 def compute_avg_voltage(sol, discard=0.5):
     """
     Compute normalized voltage proxy from average phase velocity.
-    discard: fraction of initial samples to drop as transient.
+
+    Parameters
+    ----------
+    sol : OdeResult
+        Solution object from `run_sim`.
+    discard : float, optional
+        Fraction of initial samples to drop as transient (0 <= discard < 1).
     """
     n = sol.y.shape[1]
     start = int(discard * n)
@@ -183,6 +201,7 @@ def compute_avg_voltage(sol, discard=0.5):
 def sweep_vi(params, i_dc_values, y0, tau_span=(0.0, 20.0), num_points=800):
     """
     Sweep DC bias and compute average normalized voltage (phi_dot).
+
     AC drive is turned off for a clean superconducting IV.
     """
     voltages = []
@@ -200,7 +219,7 @@ def sweep_vi(params, i_dc_values, y0, tau_span=(0.0, 20.0), num_points=800):
 
 def plot_vi_curve(ax, currents, voltages, Ic):
     """
-    Plot normalized IV curve (avg phi_dot vs I/Ic) for DC sweep.
+    Plot normalized IV curve (avg phi_dot vs I/Ic) for a DC sweep.
     """
     ax.plot(currents / Ic, voltages, marker="o", lw=1.2, label=r"$\langle \dot{\phi} \rangle$")
     ax.set_xlabel(r"Normalized bias $I/I_c$")
@@ -213,6 +232,7 @@ def plot_vi_curve(ax, currents, voltages, Ic):
 def sweep_shapiro(params, i_dc_values, y0, tau_span=(0.0, 50.0), num_points=1000):
     """
     Sweep DC bias with AC drive on to show Shapiro steps.
+
     Returns average normalized voltage for each bias point.
     """
     voltages = []
@@ -229,7 +249,7 @@ def sweep_shapiro(params, i_dc_values, y0, tau_span=(0.0, 50.0), num_points=1000
 
 def plot_shapiro(ax, currents, voltages, Ic):
     """
-    Plot Shapiro step voltage vs normalized DC bias with AC drive on.
+    Plot Shapiro-step voltage versus normalized DC bias with AC drive on.
     """
     ax.plot(currents / Ic, voltages, lw=1.2)
     ax.set_xlabel(r"Normalized bias $I/I_c$")
@@ -252,7 +272,9 @@ def animate_phase_space(model, sol, interval=20):
     Returns
     -------
     anim : matplotlib.animation.FuncAnimation
-    fig, ax : Figure and Axes used.
+        Animation object for further saving or display.
+    fig, ax : Figure, Axes
+        Matplotlib figure and axes used to render the animation.
     """
     fig, ax = plt.subplots(figsize=(6, 4))
     phi = sol.y[0]
@@ -302,7 +324,9 @@ def animate_bead_on_potential(model, sol, interval=8):
     Returns
     -------
     anim : matplotlib.animation.FuncAnimation
-    fig, ax : Figure and Axes used.
+        Animation object for further saving or display.
+    fig, ax : Figure, Axes
+        Matplotlib figure and axes used to render the animation.
     """
     phi_traj = sol.y[0]
     grid = _potential_grid(phi_traj, 400)

@@ -1,10 +1,11 @@
 """
-Artificial helium model built on the coupled-junction RCSJ solver.
+Artificial helium playground built on the coupled-junction RCSJ solver.
 
-Provides helpers to:
-- run a coupled RCSJ simulation
-- visualize phase trajectories, energy partitions, normal modes
-- view the 2D potential landscape as heatmaps and 3D surfaces with trajectory overlays
+What this module provides:
+- Thin wrapper around CoupledRCSJSolve to run coupled simulations.
+- Plotting utilities for time traces, phase space, energy partitions, and normal modes.
+- Potential-landscape viewers (2D heatmap, 3D surface, animated trajectories).
+- Convenience sweeps for IV curves and Shapiro steps plus a simple helium probability map.
 """
 
 import pathlib
@@ -36,7 +37,7 @@ def run_sim(
     **solve_kwargs,
 ):
     """
-    Run a coupled-junction RCSJ simulation.
+    Run a coupled-junction RCSJ simulation on a uniform time grid.
 
     Parameters
     ----------
@@ -54,7 +55,9 @@ def run_sim(
     Returns
     -------
     model : CoupledRCSJSolve
-    sol : OdeResult from scipy.integrate.solve_ivp
+        Solver object with parameters set from `params`.
+    sol : OdeResult
+        SciPy integrator output containing states and metadata.
     """
     model = CoupledRCSJSolve(**params)
     t_eval = np.linspace(*tau_span, num_points)
@@ -66,7 +69,7 @@ def run_sim(
 # Plotting helpers
 # --------------------------------------------------------------------------- #
 def plot_phases_time(ax, sol):
-    """Plot phi1 and phi2 vs time."""
+    """Plot junction phases phi1 and phi2 versus time on a supplied Axes."""
     ax.plot(sol.t, sol.y[0], label=r"$\phi_1$", lw=1.4)
     ax.plot(sol.t, sol.y[2], label=r"$\phi_2$", lw=1.4)
     ax.set_xlabel(r"Dimensionless time $\tau$")
@@ -77,7 +80,7 @@ def plot_phases_time(ax, sol):
 
 
 def plot_delta_phase(ax, sol):
-    """Plot phase difference vs time."""
+    """Plot phase difference (phi1 - phi2) versus time."""
     delta = sol.y[0] - sol.y[2]
     ax.plot(sol.t, delta, lw=1.4, color="C2")
     ax.set_xlabel(r"Dimensionless time $\tau$")
@@ -87,7 +90,7 @@ def plot_delta_phase(ax, sol):
 
 
 def plot_energy_split(ax, model, sol):
-    """Plot kinetic, potential components, coupling, and total energy vs time."""
+    """Plot kinetic, potential, coupling components, and total energy versus time."""
     phi1, phi1_dot, phi2, phi2_dot = sol.y
     kinetic = 0.5 * (phi1_dot**2 + phi2_dot**2)
     U1 = 1.0 - np.cos(phi1) - model.i_dc * phi1
@@ -111,7 +114,14 @@ def plot_phase_space(ax, sol, which="phi1"):
     """
     Phase-space trajectory with direction cues.
 
-    which: "phi1", "phi2", or "delta" for (phi1-phi2, phi1_dot-phi2_dot).
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes on which to draw the trajectory.
+    sol : OdeResult
+        Solution object from `run_sim`.
+    which : {"phi1", "phi2", "delta"}, optional
+        Selects phi1, phi2, or their difference (phi1-phi2, phi1_dot-phi2_dot).
     """
     if which == "phi1":
         phi = sol.y[0]
@@ -156,7 +166,7 @@ def plot_phase_space(ax, sol, which="phi1"):
 
 
 def plot_normal_modes(ax, sol):
-    """Plot symmetric and antisymmetric modes vs time."""
+    """Plot symmetric (phi+) and antisymmetric (phi-) normal modes versus time."""
     phi1, _, phi2, _ = sol.y
     phi_plus = 0.5 * (phi1 + phi2)
     phi_minus = phi1 - phi2
@@ -171,7 +181,7 @@ def plot_normal_modes(ax, sol):
 
 def plot_potential_heatmap(ax, model, sol, n_grid=200):
     """
-    Heatmap of U(phi1, phi2) with trajectory projection.
+    Potential U(phi1, phi2) heatmap with the simulated trajectory projected onto it.
     """
     phi1_traj = sol.y[0]
     phi2_traj = sol.y[2]
@@ -199,7 +209,7 @@ def plot_potential_heatmap(ax, model, sol, n_grid=200):
 
 def plot_potential_surface(ax, model, sol, n_grid=80):
     """
-    3D surface of U(phi1, phi2) with trajectory overlay.
+    3D surface view of U(phi1, phi2) with the simulated trajectory overlaid.
     """
     phi1_traj = sol.y[0]
     phi2_traj = sol.y[2]
@@ -229,7 +239,7 @@ def plot_potential_surface(ax, model, sol, n_grid=80):
 
 def plot_potential_overlay_line(ax, model, sol):
     """
-    Overlay potential along trajectory using time-coded line for intuition.
+    Overlay potential along the (phi1, phi2) trajectory using a time-coded line.
     """
     phi1 = sol.y[0]
     phi2 = sol.y[2]
@@ -249,9 +259,10 @@ def plot_potential_overlay_line(ax, model, sol):
 
 def plot_helium_probability_heatmap(ax, r_max=5.0, nr=4000, Z=2.0, a0=1.0):
     """
-    Simple two-electron probability density heatmap for helium (independent
-    hydrogenic 1s orbitals, uncorrelated).
-    Plots |psi(r1)|^2 |psi(r2)|^2 over radial coordinates.
+    Simple two-electron probability density heatmap for helium.
+
+    Uses independent hydrogenic 1s orbitals (uncorrelated) and plots
+    |psi(r1)|^2 |psi(r2)|^2 over radial coordinates.
     """
     r = np.linspace(-r_max, r_max, nr)
     R1, R2 = np.meshgrid(r, r)
@@ -271,8 +282,14 @@ def plot_helium_probability_heatmap(ax, r_max=5.0, nr=4000, Z=2.0, a0=1.0):
 
 def compute_avg_voltage_coupled(sol, discard=0.5):
     """
-    Use the average of phi1_dot and phi2_dot (normalized voltage proxy).
-    discard: fraction of initial samples to drop as transient.
+    Compute average normalized voltage proxy from phase velocities.
+
+    Parameters
+    ----------
+    sol : OdeResult
+        Solution object from `run_sim`.
+    discard : float, optional
+        Fraction of initial samples to drop as transient (0 <= discard < 1).
     """
     n = sol.y.shape[1]
     start = int(discard * n)
@@ -284,6 +301,7 @@ def compute_avg_voltage_coupled(sol, discard=0.5):
 def sweep_vi_coupled(params, i_dc_values, y0, tau_span=(0.0, 20.0), num_points=800):
     """
     Sweep DC bias and compute average normalized voltage for the coupled system.
+
     AC drive is turned off for a clean superconducting IV.
     """
     voltages = []
@@ -303,7 +321,7 @@ def sweep_shapiro_coupled(
     params, i_dc_values, y0, tau_span=(0.0, 50.0), num_points=1000
 ):
     """
-    Sweep DC bias with AC drive on to show Shapiro steps in the coupled system.
+    Sweep DC bias with AC drive enabled to reveal Shapiro steps.
     """
     voltages = []
     for i_dc in i_dc_values:
@@ -337,6 +355,15 @@ def plot_shapiro(ax, currents, voltages, Ic):
 def animate_phase_space(sol, which="phi1", interval=12):
     """
     Animate a phase-space trajectory (phi, phi_dot) with accumulating path.
+
+    Parameters
+    ----------
+    sol : OdeResult
+        Solution object from `run_sim`.
+    which : {"phi1", "phi2", "delta"}, optional
+        Selects phi1, phi2, or their difference (phi1-phi2, phi1_dot-phi2_dot).
+    interval : int, optional
+        Delay between frames in milliseconds for the animation.
     """
     if which == "phi1":
         phi = sol.y[0]
@@ -388,7 +415,9 @@ def animate_heatmap_trajectory(model, sol, n_grid=200, interval=12, max_frames=N
     Returns
     -------
     anim : matplotlib.animation.FuncAnimation
-    fig, ax : Figure and Axes used.
+        Animation object for further saving or display.
+    fig, ax : Figure, Axes
+        Matplotlib figure and axes used to render the animation.
     """
     phi1_traj = sol.y[0]
     phi2_traj = sol.y[2]
