@@ -288,6 +288,11 @@ def animate_phase_space(model, sol, interval=20):
     )
     return anim, fig, ax
 
+#Uncomment the ### lines to save animation to file directory
+
+###writer = PillowWriter(fps=30)
+###ani.save("animation.gif", writer=writer)
+
 
 def animate_bead_on_potential(model, sol, interval=8):
     """
@@ -338,6 +343,11 @@ def animate_bead_on_potential(model, sol, interval=8):
         blit=True,
     )
     return anim, fig, ax
+
+#Uncomment the ### lines to save animation to file directory
+
+###writer = PillowWriter(fps=30)
+###ani.save("animation.gif", writer=writer)
 
 
 # GETTING STARTED - EXAMPLE USAGE
