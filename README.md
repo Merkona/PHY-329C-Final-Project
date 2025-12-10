@@ -201,7 +201,7 @@ For the first case, the potential has local minima corresponding to zero voltage
 
 
 # Basic Usage
-After installing the pakages listed in the 'Getting Started' section, you are now ready to download the zip containing all code from this repository or any specific folders/files as described below. 
+After installing the pakages listed in the 'Getting Started' section, you are now ready to download the zip containing all code from this repository or any specific folders/files as described below.
 
 The folder titled `RCSJ Basis` outlines the classes and methods we use that form the basis for exploring JJs. The foundational python file of this project is `RCSJ_Core.py`, which contains the classes `RCSJParams`, `RCSJModel`, and `RCSJSolve`. These classes work sequentially to set up, model, and solve the relevant ODEs respectively.
 
@@ -282,7 +282,7 @@ If we move up a dimension, we can also see that a helium potential can be approx
 
 1. R. W. Simon, M. J. Burns, M. S. Colclough, G. Zaharchuk, and R. Cantor, *Mr. SQUID® User Guide and Advanced Experiments Manual*, STAR Cryoelectronics.
 
-2. J. Q. You and F. Nori, “Atomic physics and quantum optics using superconducting circuits,” *Nature* **474**, 589–597 (2011).
+2. J. Q. You and F. Nori, “Atomic physics and quantum optics using superconducting circuits,” *Nature* 474, 589–597 (2011).
    https://doi.org/10.1038/nature10122
 
 3. T. P. Orlando and K. A. Delin, *Foundations of Applied Superconductivity*, Addison-Wesley, Reading, MA (1991).
