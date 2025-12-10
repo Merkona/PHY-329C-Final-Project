@@ -4,16 +4,12 @@ Artificial hydrogen model built on the single-junction RCSJ solver.
 This module provides convenience helpers to:
 - run a single-junction RCSJ simulation
 - visualize phase vs time, energy partition, phase space (with direction),
-  potential overlay with time-coded trajectory, and an optional phase-space
+  potential overlay with time-coded trajectory, and a phase-space
   animation.
-
-All plotting routines expect a matplotlib Axes and return it so callers can
-compose figures as needed.
 """
 
 import pathlib
 import sys
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -26,7 +22,6 @@ if str(REPO_ROOT) not in sys.path:
 
 from RCSJ_Basis.single_junction import SingleRCSJSolve
 
-
 # --------------------------------------------------------------------------- #
 # Simulation helper
 # --------------------------------------------------------------------------- #
@@ -35,6 +30,7 @@ def run_sim(
     y0,
     tau_span,
     num_points=2000,
+    t_eval=None,
     **solve_kwargs,
 ):
     """
@@ -59,10 +55,24 @@ def run_sim(
     model : SingleRCSJSolve
     sol : OdeResult from scipy.integrate.solve_ivp
     """
+    tau_start, tau_end = map(float, tau_span)
     model = SingleRCSJSolve(**params)
-    t_eval = np.linspace(*tau_span, num_points)
-    sol = model.solve(y0=y0, tau_span=tau_span, t_eval=t_eval, **solve_kwargs)
+    if t_eval is None:
+        t_eval = np.linspace(tau_start, tau_end, num_points)
+    sol = model.solve(y0=y0, tau_span=(tau_start, tau_end), t_eval=t_eval, **solve_kwargs)
     return model, sol
+
+
+def _potential_grid(phi_traj, n_grid=400):
+    """
+    Build a grid around the trajectory range with padding to show neighboring wells.
+    """
+    phi_min = phi_traj.min()
+    phi_max = phi_traj.max()
+    span = phi_max - phi_min
+    margin = 0.5 * (span + 1e-6) + 2 * np.pi
+    grid = np.linspace(phi_min - margin, phi_max + margin, n_grid)
+    return grid
 
 
 # --------------------------------------------------------------------------- #
@@ -137,24 +147,21 @@ def plot_potential_overlay(ax, model, sol, n_grid=400):
     Plot tilted washboard potential with a time-coded trajectory overlay.
     """
     phi_traj = sol.y[0]
-    phi_min = phi_traj.min()
-    phi_max = phi_traj.max()
-    span = phi_max - phi_min
-    margin = 0.5 * (span + 1e-6) + 2 * np.pi  # pad to reveal adjacent well
-    grid = np.linspace(phi_min - margin, phi_max + margin, n_grid)
+    grid = _potential_grid(phi_traj, n_grid)
     potential_curve = model.potential(grid)
     ax.plot(grid, potential_curve, color="0.4", lw=1.5, label="Potential")
 
     # Time-coded trajectory using a LineCollection
     phi = phi_traj
-    U = model.potential(phi)
-    points = np.array([phi, U]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
-    lc = LineCollection(segments, cmap="plasma", linewidth=2.0)
-    lc.set_array(sol.t[:-1])
-    ax.add_collection(lc)
-    cb = plt.colorbar(lc, ax=ax)
-    cb.set_label(r"Time $\tau$")
+    if phi.size >= 2:
+        U = model.potential(phi)
+        points = np.array([phi, U]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        lc = LineCollection(segments, cmap="plasma", linewidth=2.0)
+        lc.set_array(sol.t[:-1])
+        ax.add_collection(lc)
+        cb = plt.colorbar(lc, ax=ax)
+        cb.set_label(r"Time $\tau$")
 
     ax.set_xlabel(r"Phase $\phi$")
     ax.set_ylabel(r"Potential $U(\phi)$")
@@ -192,7 +199,10 @@ def sweep_vi(params, i_dc_values, y0, tau_span=(0.0, 20.0), num_points=800):
 
 
 def plot_vi_curve(ax, currents, voltages, Ic):
-    ax.plot(currents / Ic, voltages, marker="o", lw=1.2)
+    """
+    Plot normalized IV curve (avg phi_dot vs I/Ic) for DC sweep.
+    """
+    ax.plot(currents / Ic, voltages, marker="o", lw=1.2, label=r"$\langle \dot{\phi} \rangle$")
     ax.set_xlabel(r"Normalized bias $I/I_c$")
     ax.set_ylabel(r"Normalized voltage $\langle \dot{\phi} \rangle$")
     ax.set_title("IV Curve (superconducting to running state)")
@@ -218,6 +228,9 @@ def sweep_shapiro(params, i_dc_values, y0, tau_span=(0.0, 50.0), num_points=1000
 
 
 def plot_shapiro(ax, currents, voltages, Ic):
+    """
+    Plot Shapiro step voltage vs normalized DC bias with AC drive on.
+    """
     ax.plot(currents / Ic, voltages, lw=1.2)
     ax.set_xlabel(r"Normalized bias $I/I_c$")
     ax.set_ylabel(r"Normalized voltage $\langle \dot{\phi} \rangle$")
@@ -292,11 +305,7 @@ def animate_bead_on_potential(model, sol, interval=8):
     fig, ax : Figure and Axes used.
     """
     phi_traj = sol.y[0]
-    phi_min = phi_traj.min()
-    phi_max = phi_traj.max()
-    span = phi_max - phi_min
-    margin = 0.5 * (span + 1e-6) + 2 * np.pi  # pad to reveal adjacent well
-    grid = np.linspace(phi_min - margin, phi_max + margin, 400)
+    grid = _potential_grid(phi_traj, 400)
     U_grid = model.potential(grid)
 
     fig, ax = plt.subplots(figsize=(7, 4))
@@ -328,9 +337,11 @@ def animate_bead_on_potential(model, sol, interval=8):
     return anim, fig, ax
 
 
-# --------------------------------------------------------------------------- #
-# Example usage
-# --------------------------------------------------------------------------- #
+#GETTING STARTED - EXAMPLE USAGE
+#READY TO RUN
+#Feel free to change parameters of the below example as needed, we have inputted a reasonable case example
+#Expect plots and animations outputted, no terminal output
+
 if __name__ == "__main__":
     # Example parameters for a driven single junction
     params = dict(

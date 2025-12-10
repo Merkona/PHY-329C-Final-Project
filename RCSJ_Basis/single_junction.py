@@ -48,7 +48,12 @@ class SingleRCSJSolve(RCSJSolve):
         T = 0.5 * phi_dot**2
         U = self.potential(phi)  # inherited from RCSJModel
         return T + U
-    
+
+#GETTING STARTED - EXAMPLE USAGE
+#READY TO RUN
+#Feel free to change parameters of the below example as needed, we have inputted a reasonable case example
+#Output will be solely in terminal
+
 if __name__ == "__main__":
     # Example parameters
     jj = SingleRCSJSolve(

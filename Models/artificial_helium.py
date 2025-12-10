@@ -440,9 +440,11 @@ def animate_heatmap_trajectory(model, sol, n_grid=200, interval=12, max_frames=N
     return anim, fig, ax
 
 
-# --------------------------------------------------------------------------- #
-# Example usage
-# --------------------------------------------------------------------------- #
+#GETTING STARTED - EXAMPLE USAGE
+#READY TO RUN
+#Feel free to change parameters of the below example as needed, we have inputted a reasonable case example
+#Expect plots and animations outputted, no terminal output
+
 if __name__ == "__main__":
     params = dict(
         kappa=0.2,

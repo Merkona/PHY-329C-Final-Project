@@ -126,6 +126,10 @@ class CoupledRCSJSolve(RCSJSolve):
         U = self.potential(phi1, phi2)
         return T + U
 
+#GETTING STARTED - EXAMPLE USAGE
+#READY TO RUN
+#Feel free to change parameters of the below example as needed, we have inputted a reasonable case example
+#Output will be solely in terminal
 
 if __name__ == "__main__":
     # Minimal smoke test for the coupled junction model
